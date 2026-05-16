@@ -16,11 +16,7 @@
 
         <div class="avatar-upload">
             <div class="avatar-preview">
-                {% if user.avatar %}
-                    <img src="{{ user.avatar.url }}" alt="Аватар">
-                {% else %}
-                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию">
-                {% endif %}
+                {% include 'includes/user-avatar.html' with profile_user=user alt='Аватар' %}
                 <div class="overlay">
                     <button type="button" onclick="document.getElementById('id_avatar').click()">Заменить</button>
                 </div>

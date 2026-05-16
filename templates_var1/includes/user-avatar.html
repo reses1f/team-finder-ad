@@ -1,0 +1,8 @@
+{% load static %}
+<img
+    src="{% if profile_user.avatar %}{{ profile_user.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+    alt="{{ alt|default:'Аватар' }}"
+    class="{{ css_class|default:'avatar' }}"
+    {% if width %}width="{{ width }}"{% endif %}
+    {% if height %}height="{{ height }}"{% endif %}
+>

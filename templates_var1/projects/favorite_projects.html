@@ -23,6 +23,7 @@
         {% endfor %}
     </div>
 
+    {% include 'includes/pagination.html' with page_obj=projects %}
     {% include 'includes/project-fav-toggle.js' %}
 </div>
 

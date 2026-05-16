@@ -30,11 +30,7 @@
                     <p>Создать проект</p>
                 </a>
                 <a class="user-menu nav-link">
-                    {% if request.user.avatar %}
-                        <img src="{{ request.user.avatar.url }}" alt="Аватар" class="avatar">
-                    {% else %}
-                        <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="avatar">
-                    {% endif %}
+                    {% include 'includes/user-avatar.html' with profile_user=request.user css_class='avatar' alt='Аватар' %}
                     <span class="username">{{ request.user.name }} {{ request.user.surname }}</span>
                 </a>
                 {% else %}

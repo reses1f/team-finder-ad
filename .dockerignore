@@ -1,0 +1,11 @@
+venv
+__pycache__
+*.pyc
+.git
+.env
+staticfiles
+media
+*.md
+docs
+templates_var2
+templates_var3

@@ -14,11 +14,7 @@
         <div class="project-card-header">
             <a href="/users/{{ project.owner.id }}">
                 <div class="project-card-header-left">
-                    {% if project.owner.avatar %}
-                        <img src="{{ project.owner.avatar.url }}" alt="Аватар автора" class="project-author-avatar">
-                    {% else %}
-                        <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="project-author-avatar">
-                    {% endif %}
+                    {% include 'includes/user-avatar.html' with profile_user=project.owner css_class='project-author-avatar' alt='Аватар автора' %}
                     <div class="project-meta">
                         <span class="project-author">{{ project.owner.name }} {{ project.owner.surname }}</span>
                         <span class="project-date">{{ project.created_at|date:"d.m.Y" }}</span>
@@ -50,16 +46,6 @@
                 {% endif %}
         </div>
         <div class="project-actions">
-            {% if user.is_authenticated %}
-            <button
-                    class="black-button project-fav-icon {% if project in user.favorites.all %}favorite{% else %}not-favorite{% endif %}"
-                    data-project-id="{{ project.id }}"
-                    data-fav="{% if project in user.favorites.all %}true{% else %}false{% endif %}"
-                    title="Добавить в избранное"
-            >
-                {% include 'includes/svg/heart.html' %}
-            </button>
-            {% endif %}
             <a href="#"
                class="black-button black-button-share share-button"
                data-url="/projects/{{ project.id }}">
@@ -101,11 +87,7 @@
         {% for member in project.participants.all %}
         <a href="/users/{{ member.id }}" id="participant-{{ member.id }}">
             <div class="participant-item">
-                {% if member.avatar %}
-                    <img src="{{ member.avatar.url }}" alt="Аватар" class="participant-avatar">
-                {% else %}
-                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
-                {% endif %}
+                {% include 'includes/user-avatar.html' with profile_user=member css_class='participant-avatar' alt='Аватар' %}
                 <div class="participant-info">
                     <span class="participant-name">{{ member.name }} {{ member.surname }}</span>
                     <span class="participant-role">
@@ -119,7 +101,6 @@
         {% endfor %}
         </div>
     </div>
-    {% include 'includes/project-fav-toggle.js' %}
 </div>
 {% endblock %}
 {% endwith %}
