@@ -1,0 +1,26 @@
+[
+  {
+    "email": "anna@example.com",
+    "password": "demo12345",
+    "name": "Анна",
+    "surname": "Иванова",
+    "phone": "+79001111111",
+    "about": "Fullstack-разработчик, люблю open source."
+  },
+  {
+    "email": "boris@example.com",
+    "password": "demo12345",
+    "name": "Борис",
+    "surname": "Петров",
+    "phone": "+79002222222",
+    "about": "Backend на Python и Django."
+  },
+  {
+    "email": "maria@example.com",
+    "password": "demo12345",
+    "name": "Мария",
+    "surname": "Сидорова",
+    "phone": "+79003333333",
+    "about": "Frontend-разработчик."
+  }
+]

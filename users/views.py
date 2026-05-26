@@ -2,7 +2,8 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
-
+from .constants import PAGE_SIZE
+from .service import get_paginated_page
 from users.forms import (
     CustomPasswordChangeForm,
     LoginForm,
@@ -11,7 +12,6 @@ from users.forms import (
 )
 from users.models import User
 
-PAGE_SIZE = 12
 
 FILTER_HANDLERS = {
     "owners-of-favorite-projects": lambda user: User.objects.filter(
@@ -33,7 +33,8 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect("projects:list")
     form = RegistrationForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
+
         user = form.save()
         login(request, user)
         return redirect("projects:list")
@@ -44,7 +45,8 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect("projects:list")
     form = LoginForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
+
         login(request, form.user)
         return redirect("projects:list")
     return render(request, "users/login.html", {"form": form})
@@ -71,9 +73,11 @@ def participants_list_view(request):
         handler = FILTER_HANDLERS.get(active_filter)
         if handler:
             queryset = handler(request.user).distinct().order_by("-id")
+            
 
-    paginator = Paginator(queryset, PAGE_SIZE)
-    page = paginator.get_page(request.GET.get("page"))
+    page = get_paginated_page(request, queryset) 
+
+
     query_params = request.GET.copy()
     query_params.pop("page", None)
     return render(
@@ -94,7 +98,8 @@ def edit_profile_view(request):
         request.FILES or None,
         instance=request.user,
     )
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
+
         form.save()
         return redirect("users:detail", user_id=request.user.pk)
     return render(request, "users/edit_profile.html", {"form": form})
@@ -103,7 +108,15 @@ def edit_profile_view(request):
 @login_required
 def change_password_view(request):
     form = CustomPasswordChangeForm(request.user, request.POST or None)
-    if request.method == "POST" and form.is_valid():
+    if form.is_valid():
+
         form.save()
         return redirect("users:detail", user_id=request.user.pk)
     return render(request, "users/change_password.html", {"form": form})
+def root_redirect(request):
+    return redirect("projects:list")
+def root_redirect(request):
+    from django.shortcuts import redirect
+    return redirect("projects:list")
+
+

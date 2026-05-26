@@ -1,28 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
-from django.contrib.auth.forms import UserChangeForm, UserCreationForm
-
+from .forms import UserCreationForm, UserChangeForm
 from users.models import User
-
-
-class CustomUserCreationForm(UserCreationForm):
-    class Meta(UserCreationForm.Meta):
-        model = User
-        fields = ("email", "name", "surname")
-
-
-class CustomUserChangeForm(UserChangeForm):
-    class Meta(UserChangeForm.Meta):
-        model = User
-        fields = "__all__"
 
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    form = CustomUserChangeForm
-    add_form = CustomUserCreationForm
+    form = UserChangeForm
+    add_form = UserCreationForm
     model = User
-    list_display = ("email", "name", "surname", "phone", "is_staff", "is_active")
+    list_display = ("email", "name", "surname", "phone", "projects_count", "is_staff", "is_active")
     list_filter = ("is_staff", "is_active")
     search_fields = ("email", "name", "surname", "phone")
     ordering = ("email",)
@@ -42,3 +29,11 @@ class UserAdmin(DjangoUserAdmin):
         ),
     )
     filter_horizontal = ("favorites", "groups", "user_permissions")
+    @admin.display(description="Кол-во проектов")
+    def projects_count(self, obj):
+        
+        return obj.projects.count()
+    @admin.display(description="Кол-во проектов")
+    def projects_count(self, obj):
+        return obj.projects.count()
+

@@ -1,42 +1,24 @@
 from django.core.management.base import BaseCommand
-
+import json
 from projects.models import Project
 from users.avatar import DEMO_AVATAR_FILES
 from users.models import User
+import os
 
 
 class Command(BaseCommand):
     help = "Загружает тестовых пользователей и проекты для проверки Team Finder"
 
     def handle(self, *args, **options):
-        demo_users = [
-            {
-                "email": "anna@example.com",
-                "password": "demo12345",
-                "name": "Анна",
-                "surname": "Иванова",
-                "phone": "+79001111111",
-                "about": "Fullstack-разработчик, люблю open source.",
-            },
-            {
-                "email": "boris@example.com",
-                "password": "demo12345",
-                "name": "Борис",
-                "surname": "Петров",
-                "phone": "+79002222222",
-                "about": "Backend на Python и Django.",
-            },
-            {
-                "email": "maria@example.com",
-                "password": "demo12345",
-                "name": "Мария",
-                "surname": "Сидорова",
-                "phone": "+79003333333",
-                "about": "UI/UX и фронтенд.",
-            },
-        ]
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(current_dir, "demo_users.json")
 
-        users = []
+        # Читаем данные из файла
+        with open(json_path, "r", encoding="utf-8") as f:
+            demo_users = json.load(f)
+
+
+            users = []
         for data in demo_users:
             user, created = User.objects.get_or_create(
                 email=data["email"],
@@ -53,46 +35,33 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"Создан пользователь {user.email}"))
             else:
                 self.stdout.write(f"Пользователь {user.email} уже существует")
-            user.assign_preset_avatar(DEMO_AVATAR_FILES[data["email"]])
+                
+            # ЭТА СТРОКА ДОЛЖНА БЫТЬ ТУТ (с отступом 12 пробелов, вне блоков if/else)
             users.append(user)
 
-        projects_data = [
-            {
-                "owner": users[0],
-                "name": "Платформа для поиска команды",
-                "description": "Веб-сервис для студентов и разработчиков.",
-                "status": Project.STATUS_OPEN,
-            },
-            {
-                "owner": users[1],
-                "name": "API для мобильного приложения",
-                "description": "REST API на Django REST framework.",
-                "status": Project.STATUS_OPEN,
-            },
-            {
-                "owner": users[2],
-                "name": "Редизайн лендинга",
-                "description": "Обновление UI и адаптивной вёрстки.",
-                "status": Project.STATUS_CLOSED,
-            },
-        ]
+            json_projects_path = os.path.join(current_dir, "demo_projects.json")
+        with open(json_projects_path, "r", encoding="utf-8") as f:
+            projects_data = json.load(f)
 
         for data in projects_data:
-            owner = data.pop("owner")
+            owner_index = data.pop("owner_index")
+            owner = users[owner_index]
+            
+            status_str = data.pop("status")
+            status = Project.STATUS_OPEN if status_str == "open" else Project.STATUS_CLOSED
+
             project, created = Project.objects.get_or_create(
                 name=data["name"],
                 owner=owner,
-                defaults=data,
+                defaults={
+                    "description": data["description"],
+                    "status": status,
+                }
             )
             if created:
-                project.participants.add(owner)
-                self.stdout.write(self.style.SUCCESS(f"Создан проект «{project.name}»"))
+                self.stdout.write(self.style.SUCCESS(f"Создан проект: {project.name}"))
             else:
-                self.stdout.write(f"Проект «{project.name}» уже существует")
+                self.stdout.write(f"Проект {project.name} уже существует")
 
-        if len(users) >= 2:
-            users[1].favorites.add(Project.objects.filter(owner=users[0]).first())
-        if len(users) >= 3 and Project.objects.filter(owner=users[1]).exists():
-            users[2].favorites.add(Project.objects.filter(owner=users[1]).first())
 
-        self.stdout.write(self.style.SUCCESS("Демо-данные загружены."))
+      

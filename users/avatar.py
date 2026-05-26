@@ -1,6 +1,13 @@
 import hashlib
 import io
 from pathlib import Path
+from .constants import (
+    AVATAR_COLORS,
+    AVATAR_SIZE,
+    AVATAR_FONT_SIZE,
+    AVATAR_TEXT_COLOR,
+    AVATAR_TEXT_Y_OFFSET,
+)
 
 from django.core.files.base import ContentFile
 from PIL import Image, ImageDraw, ImageFont
@@ -13,18 +20,6 @@ DEMO_AVATAR_FILES = {
     "boris@example.com": "Nikita.png",
     "maria@example.com": "Maria.png",
 }
-
-AVATAR_COLORS = [
-    (108, 117, 125),
-    (73, 80, 87),
-    (52, 58, 64),
-    (134, 142, 150),
-    (90, 98, 104),
-    (66, 74, 82),
-    (119, 128, 138),
-    (85, 93, 100),
-]
-
 
 def color_for_name(name: str) -> tuple[int, int, int]:
     key = (name or "?").strip().lower()
@@ -47,18 +42,25 @@ def load_preset_avatar_file(filename: str) -> ContentFile:
 def generate_avatar_file(name: str) -> ContentFile:
     letter = (name or "?")[0].upper()
     color = color_for_name(name)
-    size = 256
-    image = Image.new("RGB", (size, size), color=color)
+    image = Image.new("RGB", (AVATAR_SIZE, AVATAR_SIZE), color=color)
     draw = ImageDraw.Draw(image)
+    
     try:
-        font = ImageFont.truetype("arial.ttf", 120)
+        font = ImageFont.truetype("arial.ttf", AVATAR_FONT_SIZE)
     except OSError:
-        font = ImageFont.load_default()
+        font = ImageFont.load_default(size=AVATAR_FONT_SIZE)
+
     bbox = draw.textbbox((0, 0), letter, font=font)
     text_width = bbox[2] - bbox[0]
     text_height = bbox[3] - bbox[1]
-    position = ((size - text_width) / 2, (size - text_height) / 2 - 10)
-    draw.text(position, letter, fill=(255, 255, 255), font=font)
+    
+    position = (
+        (AVATAR_SIZE - text_width) / 2, 
+        (AVATAR_SIZE - text_height) / 2 - AVATAR_TEXT_Y_OFFSET
+    )
+    
+    draw.text(position, letter, fill=AVATAR_TEXT_COLOR, font=font)
+
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     buffer.seek(0)

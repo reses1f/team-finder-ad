@@ -2,14 +2,29 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.password_validation import validate_password
-
+from django.contrib.auth.forms import (
+    UserCreationForm as DjangoUserCreationForm,
+    UserChangeForm as DjangoUserChangeForm,
+)
+ 
 from users.models import User
 from users.validators import validate_github_url, validate_phone
+from .constants import USER_NAME_MAX_LENGTH
 
 
-class RegistrationForm(forms.Form):
-    name = forms.CharField(max_length=124, label="Имя")
-    surname = forms.CharField(max_length=124, label="Фамилия")
+
+class UserCreationForm(DjangoUserCreationForm):
+    class Meta(DjangoUserCreationForm.Meta):
+        model = User
+        fields = ("email", "name", "surname")
+
+class UserChangeForm(DjangoUserChangeForm):
+    class Meta(DjangoUserChangeForm.Meta):
+        model = User
+        fields = "__all__"
+        list_display = ("email", "name", "surname", "phone", "projects_count", "is_staff", "is_active")
+        name = forms.CharField(max_length=USER_NAME_MAX_LENGTH, label="Имя")
+    surname = forms.CharField(max_length=USER_NAME_MAX_LENGTH, label="Фамилия")
     email = forms.EmailField(label="Email")
     password = forms.CharField(widget=forms.PasswordInput, label="Пароль")
 
@@ -31,6 +46,7 @@ class RegistrationForm(forms.Form):
             name=self.cleaned_data["name"],
             surname=self.cleaned_data["surname"],
         )
+
 
 
 class LoginForm(forms.Form):
@@ -98,3 +114,27 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         widget=forms.PasswordInput,
         label="Подтвердите новый пароль",
     )
+class RegistrationForm(forms.Form):
+    name = forms.CharField(max_length=USER_NAME_MAX_LENGTH, label="Имя")
+    surname = forms.CharField(max_length=USER_NAME_MAX_LENGTH, label="Фамилия")
+    email = forms.EmailField(label="Email")
+    password = forms.CharField(widget=forms.PasswordInput, label="Пароль")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Пользователь с таким email уже существует")
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        validate_password(password)
+        return password
+
+    def save(self):
+        return User.objects.create_user(
+            email=self.cleaned_data["email"],
+            password=self.cleaned_data["password"],
+            name=self.cleaned_data["name"],
+            surname=self.cleaned_data["surname"],
+        )
