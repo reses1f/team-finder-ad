@@ -1,0 +1,119 @@
+from django import forms
+from django.contrib.auth import authenticate
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import (
+    UserChangeForm as DjangoUserChangeForm,
+)
+from django.contrib.auth.forms import (
+    UserCreationForm as DjangoUserCreationForm,
+)
+from django.contrib.auth.password_validation import validate_password
+
+from users.constants import USER_NAME_MAX_LENGTH
+from users.models import User
+from users.validators import validate_github_url, validate_phone
+
+
+class UserCreationForm(DjangoUserCreationForm):
+    class Meta(DjangoUserCreationForm.Meta):
+        model = User
+        fields = ("email", "name", "surname")
+
+
+class UserChangeForm(DjangoUserChangeForm):
+    class Meta(DjangoUserChangeForm.Meta):
+        model = User
+        fields = "__all__"
+
+
+class LoginForm(forms.Form):
+    email = forms.EmailField(label="Email")
+    password = forms.CharField(widget=forms.PasswordInput, label="Пароль")
+
+    def __init__(self, *args, **kwargs):
+        self.user = None
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email")
+        password = cleaned_data.get("password")
+        if email and password:
+            self.user = authenticate(
+                request=None,
+                username=email.lower(),
+                password=password,
+            )
+            if self.user is None:
+                raise forms.ValidationError("Неверный email или пароль")
+        return cleaned_data
+
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("name", "surname", "avatar", "about", "phone", "github_url")
+        labels = {
+            "name": "Имя",
+            "surname": "Фамилия",
+            "avatar": "Аватар",
+            "about": "О себе",
+            "phone": "Телефон",
+            "github_url": "GitHub",
+        }
+
+    def clean_phone(self):
+        phone = self.cleaned_data["phone"]
+        normalized = validate_phone(phone)
+        qs = User.objects.filter(phone=normalized)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Этот номер телефона уже используется")
+        return normalized
+
+    def clean_github_url(self):
+        url = self.cleaned_data.get("github_url", "")
+        validate_github_url(url)
+        return url
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    old_password = forms.CharField(
+        widget=forms.PasswordInput,
+        label="Текущий пароль",
+    )
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput,
+        label="Новый пароль",
+    )
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput,
+        label="Подтвердите новый пароль",
+    )
+
+
+class RegistrationForm(forms.Form):
+    name = forms.CharField(max_length=USER_NAME_MAX_LENGTH, label="Имя")
+    surname = forms.CharField(max_length=USER_NAME_MAX_LENGTH, label="Фамилия")
+    email = forms.EmailField(label="Email")
+    password = forms.CharField(widget=forms.PasswordInput, label="Пароль")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Пользователь с таким email уже существует")
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        validate_password(password)
+        return password
+
+    def save(self):
+        return User.objects.create_user(
+            email=self.cleaned_data["email"],
+            password=self.cleaned_data["password"],
+            name=self.cleaned_data["name"],
+            surname=self.cleaned_data["surname"],
+        )

@@ -1,0 +1,20 @@
+[
+  {
+    "owner_index": 0,
+    "name": "Платформа для поиска команды",
+    "description": "Веб-сервис для студентов и разработчиков.",
+    "status": "open"
+  },
+  {
+    "owner_index": 1,
+    "name": "API для мобильного приложения",
+    "description": "REST API на Django REST framework.",
+    "status": "open"
+  },
+  {
+    "owner_index": 2,
+    "name": "Редизайн лендинга",
+    "description": "Обновление UI и адаптивной вёрстки.",
+    "status": "closed"
+  }
+]
